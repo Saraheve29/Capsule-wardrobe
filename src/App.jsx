@@ -527,10 +527,71 @@ function SeasonPicker({ active, onPick }) {
   );
 }
 
-function ItemRow({ item, state, onChange }) {
-  const [editing, setEditing] = useState(false);
+function DeleteBtn({ onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label="Delete item"
+      style={{ background: C.blushSoft, color: C.deepPink, border: "none", borderRadius: "50%", width: 30, height: 30, minWidth: 30, fontWeight: 700, fontSize: 16, cursor: "pointer" }}
+    >
+      ×
+    </button>
+  );
+}
+
+function SmallPinkBtn({ children, onClick }) {
+  return (
+    <button onClick={onClick} style={{ ...btnBase, padding: "8px 16px", fontSize: 14, background: `linear-gradient(135deg, ${C.pink}, ${C.deepPink})`, color: "#fff", whiteSpace: "nowrap" }}>
+      {children}
+    </button>
+  );
+}
+
+function EditBar({ editing, setEditing, onRestore, restoreLabel }) {
+  const [confirm, setConfirm] = useState(false);
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginTop: 12 }}>
+      <PinkButton small ghost={!editing} onClick={() => { setEditing((e) => !e); setConfirm(false); }}>
+        {editing ? "✓ Finished editing" : "✏️ Edit items"}
+      </PinkButton>
+      {editing && !confirm && (
+        <PinkButton small ghost onClick={() => setConfirm(true)}>↺ {restoreLabel}</PinkButton>
+      )}
+      {editing && confirm && (
+        <>
+          <PinkButton small onClick={() => { onRestore(); setConfirm(false); }}>Yes, restore</PinkButton>
+          <PinkButton small ghost onClick={() => setConfirm(false)}>Cancel</PinkButton>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* wardrobe item row — tick, describe, and in edit mode rename / delete */
+function ItemRow({ item, state, onChange, editing, onRename, onDelete, onToggleOptional }) {
+  const [describing, setDescribing] = useState(false);
   const have = !!state?.have;
   const name = state?.name || "";
+
+  if (editing) {
+    return (
+      <div style={{ padding: "9px 0", borderBottom: `1px dashed ${C.border}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <TextInput value={item.label} onChange={onRename} placeholder="Item name" />
+          <DeleteBtn onClick={onDelete} />
+        </div>
+        {!item.extra && (
+          <button
+            onClick={onToggleOptional}
+            style={{ marginTop: 6, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: fontBody, fontSize: 13, fontWeight: 700, color: item.optional ? C.deepPink : C.sub }}
+          >
+            {item.optional ? "☑ Optional (not on the needed list)" : "☐ Make optional"}
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: "9px 0", borderBottom: `1px dashed ${C.border}` }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -538,21 +599,21 @@ function ItemRow({ item, state, onChange }) {
           <Tick on={have} />
         </button>
         <button
-          onClick={() => setEditing((e) => !e)}
+          onClick={() => setDescribing((e) => !e)}
           style={{ flex: 1, textAlign: "left", background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: fontBody }}
         >
-          <div style={{ fontSize: 15, fontWeight: 600, color: have ? C.ink : item.extra ? C.sub : C.ink, opacity: have ? 1 : 0.9 }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: item.extra && !have ? C.sub : C.ink }}>
             {item.label}
             {item.optional && <span style={{ fontSize: 12, color: C.sub, fontWeight: 600 }}> · optional</span>}
           </div>
-          {name && !editing && <div style={{ fontSize: 13.5, color: C.deepPink, fontStyle: "italic", marginTop: 1 }}>{name}</div>}
-          {!name && !editing && <div style={{ fontSize: 12, color: "#C99AB2", marginTop: 1 }}>tap to describe it</div>}
+          {name && !describing && <div style={{ fontSize: 13.5, color: C.deepPink, fontStyle: "italic", marginTop: 1 }}>{name}</div>}
+          {!name && !describing && <div style={{ fontSize: 12, color: "#C99AB2", marginTop: 1 }}>tap to describe it</div>}
         </button>
       </div>
-      {editing && (
+      {describing && (
         <div style={{ display: "flex", gap: 8, marginTop: 8, marginLeft: 38 }}>
-          <TextInput value={name} autoFocus onChange={(v) => onChange({ have, name: v })} onEnter={() => setEditing(false)} placeholder="e.g. green linen tee" />
-          <button onClick={() => setEditing(false)} style={{ ...btnBase, padding: "8px 14px", fontSize: 13.5, background: C.blushSoft, color: C.deepPink }}>
+          <TextInput value={name} autoFocus onChange={(v) => onChange({ have, name: v })} onEnter={() => setDescribing(false)} placeholder="e.g. green linen tee" />
+          <button onClick={() => setDescribing(false)} style={{ ...btnBase, padding: "8px 14px", fontSize: 13.5, background: C.blushSoft, color: C.deepPink }}>
             Done
           </button>
         </div>
@@ -561,10 +622,21 @@ function ItemRow({ item, state, onChange }) {
   );
 }
 
-function CategoryCard({ cat, seasonState, update }) {
+function CategoryCard({ cat, seasonState, update, editing, editCat }) {
   const [open, setOpen] = useState(true);
+  const [draft, setDraft] = useState("");
+  const [draftOptional, setDraftOptional] = useState(false);
   const counted = cat.items.filter((i) => !i.extra);
   const done = counted.filter((i) => seasonState[`${cat.id}.${i.id}`]?.have).length;
+
+  const setItems = (fn) => editCat({ ...cat, items: fn(cat.items) });
+  const add = () => {
+    if (!draft.trim()) return;
+    setItems((items) => [...items, { id: `n${Date.now()}`, label: draft.trim(), optional: draftOptional }]);
+    setDraft("");
+    setDraftOptional(false);
+  };
+
   return (
     <Card>
       <button onClick={() => setOpen((o) => !o)} style={{ width: "100%", background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: fontBody, textAlign: "left" }}>
@@ -582,8 +654,33 @@ function CategoryCard({ cat, seasonState, update }) {
       </button>
       {open && cat.items.map((item) => {
         const key = `${cat.id}.${item.id}`;
-        return <ItemRow key={key} item={item} state={seasonState[key]} onChange={(v) => update(key, v)} />;
+        return (
+          <ItemRow
+            key={key}
+            item={item}
+            state={seasonState[key]}
+            onChange={(v) => update(key, v)}
+            editing={editing}
+            onRename={(label) => setItems((items) => items.map((i) => (i.id === item.id ? { ...i, label } : i)))}
+            onDelete={() => setItems((items) => items.filter((i) => i.id !== item.id))}
+            onToggleOptional={() => setItems((items) => items.map((i) => (i.id === item.id ? { ...i, optional: !i.optional } : i)))}
+          />
+        );
       })}
+      {open && editing && (
+        <div style={{ marginTop: 10 }}>
+          <div style={{ display: "flex", gap: 8 }}>
+            <TextInput value={draft} onChange={setDraft} onEnter={add} placeholder={`Add to ${cat.title.toLowerCase()}…`} />
+            <SmallPinkBtn onClick={add}>Add</SmallPinkBtn>
+          </div>
+          <button
+            onClick={() => setDraftOptional((o) => !o)}
+            style={{ marginTop: 6, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: fontBody, fontSize: 13, fontWeight: 700, color: draftOptional ? C.deepPink : C.sub }}
+          >
+            {draftOptional ? "☑ Add as optional" : "☐ Add as optional"}
+          </button>
+        </div>
+      )}
     </Card>
   );
 }
@@ -649,17 +746,32 @@ function NeededCard({ cats, seasonState, season }) {
 function WardrobeTab() {
   const [seasonId, setSeasonId] = usePersisted("season", seasonForToday());
   const [all, setAll] = usePersisted("wardrobe", {});
+  const [customCats, setCustomCats] = usePersisted("wardrobeLists", {});
+  const [editing, setEditing] = useState(false);
   const season = SEASONS.find((s) => s.id === seasonId) || SEASONS[0];
-  const cats = buildCategories(season);
+  const cats = customCats[season.id] || buildCategories(season);
   const seasonState = all[season.id] || {};
 
   const update = (key, v) =>
     setAll((prev) => ({ ...prev, [season.id]: { ...(prev[season.id] || {}), [key]: v } }));
 
+  const editCat = (newCat) =>
+    setCustomCats((prev) => ({
+      ...prev,
+      [season.id]: (prev[season.id] || buildCategories(season)).map((c) => (c.id === newCat.id ? newCat : c)),
+    }));
+
+  const restore = () =>
+    setCustomCats((prev) => {
+      const next = { ...prev };
+      delete next[season.id];
+      return next;
+    });
+
   return (
     <>
       <Header title="My Capsule Wardrobe" subtitle="Everything mixes · no duplicates · no “just okay” items" />
-      <SeasonPicker active={season.id} onPick={setSeasonId} />
+      <SeasonPicker active={season.id} onPick={(id) => { setSeasonId(id); setEditing(false); }} />
 
       <Card style={{ textAlign: "center", padding: "14px 16px" }}>
         <div style={{ fontFamily: fontScript, fontSize: 30, color: C.deepPink, lineHeight: 1.2 }}>
@@ -668,13 +780,16 @@ function WardrobeTab() {
         <div style={{ fontSize: 14.5, color: C.ink, fontWeight: 600 }}>
           {season.colours} <span style={{ color: C.sub }}>{season.base}</span>
         </div>
-        <div style={{ fontSize: 13, color: C.sub, marginTop: 4 }}>Denim / neutral trousers · tick what you have, tap to describe it</div>
+        <div style={{ fontSize: 13, color: C.sub, marginTop: 4 }}>
+          {editing ? "Rename, delete or add items below — changes save automatically" : "Tick what you have, tap an item to describe it"}
+        </div>
+        <EditBar editing={editing} setEditing={setEditing} onRestore={restore} restoreLabel={`Restore original ${season.name.toLowerCase()} items`} />
       </Card>
 
-      <NeededCard cats={cats} seasonState={seasonState} season={season} />
+      {!editing && <NeededCard cats={cats} seasonState={seasonState} season={season} />}
 
       {cats.map((cat) => (
-        <CategoryCard key={`${season.id}-${cat.id}`} cat={cat} seasonState={seasonState} update={update} />
+        <CategoryCard key={`${season.id}-${cat.id}`} cat={cat} seasonState={seasonState} update={update} editing={editing} editCat={editCat} />
       ))}
     </>
   );
@@ -682,7 +797,7 @@ function WardrobeTab() {
 
 /* ── PACKING ─────────────────────────────────── */
 
-function PackSection({ section, ticks, toggle, editing, onAdd, onRemove }) {
+function PackSection({ section, ticks, toggle, editing, onAdd, onRemove, onRename }) {
   const [open, setOpen] = useState(true);
   const [draft, setDraft] = useState("");
   const done = section.items.filter((i) => ticks[i.id]).length;
@@ -708,30 +823,30 @@ function PackSection({ section, ticks, toggle, editing, onAdd, onRemove }) {
       </button>
       {open && (
         <>
-          {section.items.map((item) => (
-            <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: `1px dashed ${C.border}` }}>
-              <button
-                onClick={() => toggle(item.id)}
-                style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: fontBody, textAlign: "left" }}
-              >
-                <Tick on={!!ticks[item.id]} size={24} />
-                <span style={{ fontSize: 15, fontWeight: 600, color: C.ink, textDecoration: ticks[item.id] ? "line-through" : "none", opacity: ticks[item.id] ? 0.5 : 1 }}>
-                  {item.text}
-                </span>
-              </button>
-              {editing && (
-                <button onClick={() => onRemove(item.id)} aria-label="Remove item" style={{ background: C.blushSoft, color: C.deepPink, border: "none", borderRadius: "50%", width: 28, height: 28, fontWeight: 700, cursor: "pointer" }}>
-                  ×
+          {section.items.map((item) =>
+            editing ? (
+              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: `1px dashed ${C.border}` }}>
+                <TextInput value={item.text} onChange={(v) => onRename(item.id, v)} placeholder="Item name" />
+                <DeleteBtn onClick={() => onRemove(item.id)} />
+              </div>
+            ) : (
+              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: `1px dashed ${C.border}` }}>
+                <button
+                  onClick={() => toggle(item.id)}
+                  style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: fontBody, textAlign: "left" }}
+                >
+                  <Tick on={!!ticks[item.id]} size={24} />
+                  <span style={{ fontSize: 15, fontWeight: 600, color: C.ink, textDecoration: ticks[item.id] ? "line-through" : "none", opacity: ticks[item.id] ? 0.5 : 1 }}>
+                    {item.text}
+                  </span>
                 </button>
-              )}
-            </div>
-          ))}
+              </div>
+            )
+          )}
           {editing && (
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
               <TextInput value={draft} onChange={setDraft} onEnter={add} placeholder="Add an item…" />
-              <button onClick={add} style={{ ...btnBase, padding: "8px 16px", fontSize: 14, background: `linear-gradient(135deg, ${C.pink}, ${C.deepPink})`, color: "#fff" }}>
-                Add
-              </button>
+              <SmallPinkBtn onClick={add}>Add</SmallPinkBtn>
             </div>
           )}
         </>
@@ -757,6 +872,8 @@ function PackingTab() {
     setLists((p) => ({ ...p, [trip]: (p[trip] || DEFAULT_PACKING[trip]).map((s) => (s.id === sid ? { ...s, items: fn(s.items) } : s)) }));
   const addItem = (sid, text) => changeSection(sid, (items) => [...items, { id: `${sid}-${Date.now()}`, text }]);
   const removeItem = (sid, id) => changeSection(sid, (items) => items.filter((i) => i.id !== id));
+  const renameItem = (sid, id, text) => changeSection(sid, (items) => items.map((i) => (i.id === id ? { ...i, text } : i)));
+  const restoreList = () => setLists((p) => ({ ...p, [trip]: DEFAULT_PACKING[trip] }));
 
   const resetTicks = () => {
     setTicks((p) => ({ ...p, [trip]: {} }));
@@ -775,7 +892,7 @@ function PackingTab() {
           return (
             <button
               key={t.id}
-              onClick={() => { setTrip(t.id); setConfirmReset(false); }}
+              onClick={() => { setTrip(t.id); setConfirmReset(false); setEditing(false); }}
               style={{
                 flex: 1,
                 fontFamily: fontBody,
@@ -800,25 +917,30 @@ function PackingTab() {
       <Card style={{ background: "linear-gradient(180deg, #FFF6FA, #FCE4EE)" }}>
         <CardTitle icon="🧳" title={label} right={<Pill>{done}/{total} packed</Pill>} />
         <ProgressBar done={done} total={total} />
-        {done === total && total > 0 && (
+        {done === total && total > 0 && !editing && (
           <div style={{ textAlign: "center", marginTop: 10 }}>
             <div style={{ fontFamily: fontScript, fontSize: 30, color: C.deepPink }}>All packed!</div>
             <div style={{ fontSize: 14, color: C.sub, fontWeight: 600 }}>Have a beautiful trip, you two 💗</div>
           </div>
         )}
-        <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap", justifyContent: "center" }}>
-          <PinkButton small ghost={!editing} onClick={() => setEditing((e) => !e)}>
-            {editing ? "✓ Finished editing" : "✏️ Edit list"}
-          </PinkButton>
-          {!confirmReset ? (
-            <PinkButton small ghost onClick={() => setConfirmReset(true)}>↺ Start fresh</PinkButton>
-          ) : (
-            <>
-              <PinkButton small onClick={resetTicks}>Yes, untick all</PinkButton>
-              <PinkButton small ghost onClick={() => setConfirmReset(false)}>Cancel</PinkButton>
-            </>
-          )}
-        </div>
+        {editing && (
+          <div style={{ fontSize: 13, color: C.sub, textAlign: "center", marginTop: 10, fontWeight: 600 }}>
+            Rename, delete or add items below — changes save automatically
+          </div>
+        )}
+        <EditBar editing={editing} setEditing={setEditing} onRestore={restoreList} restoreLabel="Restore original list" />
+        {!editing && (
+          <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
+            {!confirmReset ? (
+              <PinkButton small ghost onClick={() => setConfirmReset(true)}>☐ Untick everything</PinkButton>
+            ) : (
+              <>
+                <PinkButton small onClick={resetTicks}>Yes, untick all</PinkButton>
+                <PinkButton small ghost onClick={() => setConfirmReset(false)}>Cancel</PinkButton>
+              </>
+            )}
+          </div>
+        )}
       </Card>
 
       {sections.map((s) => (
@@ -830,6 +952,7 @@ function PackingTab() {
           editing={editing}
           onAdd={(text) => addItem(s.id, text)}
           onRemove={(id) => removeItem(s.id, id)}
+          onRename={(id, text) => renameItem(s.id, id, text)}
         />
       ))}
 
