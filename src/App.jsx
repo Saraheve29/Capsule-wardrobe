@@ -77,51 +77,85 @@ const extraSlot = () => it("extra", "Extra — only if it fills a real gap", { e
 
 function buildCategories(s) {
   const sc = `Season colour (${s.word})`;
-  const cats = [
-    {
-      id: "trousers", icon: "👖", title: "Trousers", rule: "Max 6 — 4 folded, 2 hanging",
-      items: [
-        it("t1", sc), it("t2", sc),
-        it("t3", "Neutral / denim (black or light denim)"), it("t4", "Neutral / denim (black or light denim)"),
-        it("h1", "Hanging — heavier season colour or denim"),
-        it("h2", "Hanging — heavier neutral / denim"),
-        extraSlot(),
-      ],
-    },
-    {
-      id: "tops", icon: "👕", title: "Tops", rule: "Max 11 + flex",
-      items: [
-        it("s1", sc), it("s2", sc), it("s3", sc), opt("s4", `${sc} — flex`),
-        it("ws1", "White short sleeve"), it("ws2", "White short sleeve"),
-        it("wl1", "White long sleeve"), it("wl2", "White long sleeve"),
-        it("bs1", "Black short sleeve"), it("bs2", "Black short sleeve"),
-        it("bl1", "Black long sleeve"), it("bl2", "Black long sleeve"),
-        extraSlot(),
-      ],
-    },
-  ];
+  const accent = s.id === "autumn" ? "Camel or brown" : "Grey";
+  const [c1, c2] = s.colours.split(" & ");
+  const cats = [];
+
   if (s.warm) {
+    /* ── SPRING / SUMMER — lighter clothes, washed after most wears ── */
     cats.push(
       {
-        id: "shorts", icon: "🩳", title: "Shorts", rule: "Spring / Summer",
-        items: [it("b", "Black"), it("w", "White"), it("s", sc), opt("d", "Denim"), extraSlot()],
+        id: "trousers", icon: "👖", title: "Trousers", rule: "3 + 1 for chilly spring days · shorts & dresses do most of the work",
+        items: [
+          it("tn1", "Black (lightweight)"),
+          it("tn3", "Dark denim or white"),
+          it("t1", sc),
+          opt("h1", "Heavier denim — for chilly spring days"),
+          extraSlot(),
+        ],
       },
       {
-        id: "dresses", icon: "👗", title: "Dresses", rule: "Up to 4",
-        items: [it("s1", sc), it("s2", sc), it("n1", "Neutral"), opt("n2", "Neutral"), extraSlot()],
+        id: "tops", icon: "👕", title: "Tops", rule: "9 tops · mostly short sleeve",
+        items: [
+          it("s1", sc), it("s2", sc), it("s3", sc),
+          it("ws1", "White short sleeve"), it("ws2", "White short sleeve"),
+          it("bs1", "Black short sleeve"), it("bs2", "Black short sleeve"),
+          it("wl1", "White long sleeve"),
+          it("bl1", "Black long sleeve"),
+          extraSlot(),
+        ],
+      },
+      {
+        id: "shorts", icon: "🩳", title: "Shorts", rule: "3 shorts",
+        items: [it("b", "Black"), it("s", sc), it("w", "White or denim"), extraSlot()],
+      },
+      {
+        id: "dresses", icon: "👗", title: "Dresses", rule: "3, up to 4",
+        items: [it("s1", sc), it("s2", sc), it("n1", "Black or white"), opt("n2", "Black or white"), extraSlot()],
+      },
+      {
+        id: "cardigan", icon: "🧶", title: "Cardigan", rule: "Just one for cooler evenings",
+        items: [it("c", "Cardigan — black, white or season colour"), extraSlot()],
+      },
+      {
+        id: "jacket", icon: "🧥", title: "Light jacket", rule: "For chilly spring days",
+        items: [it("j", "Light jacket — denim or light trench"), extraSlot()],
+      }
+    );
+  } else {
+    /* ── AUTUMN / WINTER — heavier layers, worn 2–3 times between washes ── */
+    cats.push(
+      {
+        id: "trousers", icon: "👖", title: "Trousers", rule: "4 trousers · each worn 2–3 times between washes",
+        items: [
+          it("tn1", "Black"),
+          it("tn3", "Dark denim"),
+          it("t1", `${accent} — season colour`),
+          it("tw", "Warm pair — thick black, fleece-lined or cords"),
+          extraSlot(),
+        ],
+      },
+      {
+        id: "tops", icon: "👕", title: "Tops", rule: "7 tops + 1 flex · mostly long sleeve, worn under jumpers",
+        items: [
+          it("s1", `${c1} top`), it("s2", `${c2} top`), opt("s4", `${c1} or ${c2.toLowerCase()} top — flex`),
+          it("bl1", "Black long sleeve"), it("bl2", "Black long sleeve"),
+          it("wl1", "White long sleeve"), it("cl1", "Cream or white long sleeve"),
+          it("bs1", "Black short sleeve — for layering"),
+          extraSlot(),
+        ],
+      },
+      {
+        id: "jumpers", icon: "🧶", title: "Jumpers", rule: "3, up to 4 · kept outside the drawers",
+        items: [it("b1", "Black"), it("w1", "White or cream"), it("s", sc), opt("b2", "Black cardigan"), extraSlot()],
+      },
+      {
+        id: "coats", icon: "🧥", title: "Coats", rule: "1 warm coat · season colour optional",
+        items: [it("b", "Warm black coat"), opt("s", `${sc} coat`), extraSlot()],
       }
     );
   }
-  cats.push({
-    id: "jumpers", icon: "🧶", title: "Jumpers", rule: "Kept outside the drawers",
-    items: [it("b1", "Black"), opt("b2", "Black"), it("w1", "White"), opt("w2", "White"), it("s", sc), extraSlot()],
-  });
-  if (!s.warm) {
-    cats.push({
-      id: "coats", icon: "🧥", title: "Coats", rule: "Autumn / Winter",
-      items: [it("b", "Black"), it("s", sc), extraSlot()],
-    });
-  }
+
   cats.push(
     {
       id: "underwear", icon: "👙", title: "Underwear", rule: "5 bras · 5 knickers · 6 socks",
@@ -133,12 +167,21 @@ function buildCategories(s) {
       ],
     },
     {
-      id: "shoes", icon: "👟", title: "Shoes", rule: "Keep it to the essentials",
-      items: [it("sl1", "Sliders"), opt("sl2", "Sliders"), it("bk1", "Black shoes / boots"), opt("bk2", "Black shoes / boots"), it("s", sc), extraSlot()],
+      id: "nightwear", icon: "🌙", title: s.warm ? "Nightwear & swimwear" : "Nightwear", rule: s.warm ? "2 nighties · 1 swimsuit" : "2 nighties / sleepwear",
+      items: [
+        it("n1", "Nightie / sleepwear"), it("n2", "Nightie / sleepwear"),
+        ...(s.warm ? [it("sw", "Swimwear")] : []),
+      ],
     },
     {
-      id: "bags", icon: "👜", title: "Bags", rule: "Small, practical, matching",
-      items: [it("sb", "Small black bag"), it("r", "Neutral / black rucksack"), it("s1", sc), opt("s2", sc), extraSlot()],
+      id: "shoes", icon: "👟", title: "Shoes", rule: "3 pairs",
+      items: s.warm
+        ? [it("sl1", "Sliders or sandals"), it("tr", "Comfy trainers — black or white"), it("s", sc), opt("bk1", "Black shoes"), extraSlot()]
+        : [it("bt1", "Black boots"), it("tr", "Comfy trainers — black or white"), opt("s", sc), opt("bt2", "Black shoes"), extraSlot()],
+    },
+    {
+      id: "bags", icon: "👜", title: "Bags", rule: "3 bags",
+      items: [it("sb", "Small black bag"), it("r", "Neutral / black rucksack"), it("s1", sc), extraSlot()],
     }
   );
   return cats;
@@ -175,7 +218,7 @@ const DEFAULT_PACKING = {
     mk("su-me", "My clothes", "👚", [
       "2 shorts", "1 light trousers", "1 heavier trousers (worn for travel)",
       "White long sleeve top", "Black long sleeve top (either worn)", "Black short sleeve top", "White short sleeve top", "Season colour short sleeve top",
-      "2 dresses", "2 layers (1 worn)", "1 black bra", "1 white bra", "3 knickers", "Nightie / sleepwear",
+      "2 dresses", "2 layers (1 worn)", "1 black bra", "1 white bra", "Nightie / sleepwear",
       "2 pairs shoes (1 worn with warm socks, 1 packed)",
     ]),
     mk("su-mal", "Maleeka's clothes", "🎀", [
@@ -192,7 +235,7 @@ const DEFAULT_PACKING = {
     ...RUCKSACK("wi"),
     mk("wi-me", "My clothes", "🧥", [
       "3 trousers (wear 1)", "Black long sleeve top", "White long sleeve top (any worn)", "Season colour short sleeve top",
-      "1 jumper (worn)", "1 jumper", "3 knickers", "1 black bra", "1 white bra", "Nightie / sleepwear", "2 pairs shoes (1 worn, 1 packed)",
+      "1 jumper (worn)", "1 jumper", "1 black bra", "1 white bra", "Nightie / sleepwear", "2 pairs shoes (1 worn, 1 packed)",
     ]),
     mk("wi-mal", "Maleeka's clothes", "🎀", [
       "3 trousers (wear 1)", "Black long sleeve top", "White long sleeve top (any worn)", "Season colour short sleeve top",
@@ -795,6 +838,101 @@ function WardrobeTab() {
   );
 }
 
+/* ── clothing calculator ─────────────────────── */
+
+const CLOTHES_SECTION_IDS = ["-me", "-mal"];
+const isClothesSection = (s) => CLOTHES_SECTION_IDS.some((suffix) => s.id.endsWith(suffix));
+
+const ceil = Math.ceil;
+const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+
+/* split n tops across colour / white / black, colour first */
+function splitTops(n) {
+  const out = { colour: 0, white: 0, black: 0 };
+  const order = ["colour", "white", "black"];
+  for (let i = 0; i < n; i++) out[order[i % 3]]++;
+  return out;
+}
+
+function planClothes({ season, nights, light, wash, meTwice, malTwice }) {
+  const realDays = nights + 1;
+  const washCap = light ? 4 : 7;
+  const days = wash ? Math.min(realDays, washCap) : realDays;
+  const meOutfits = meTwice ? ceil(days / 2) : days;
+  const malOutfits = malTwice ? ceil(days / 2) : days;
+  const pj = nights > 7 && !wash ? 2 : 1;
+  const L = (cap, n) => (light ? Math.min(cap, n) : n);
+
+  const me = [];
+  const mal = [];
+  const add = (list, id, text, n, note) => n > 0 && list.push({ id, text, n, note });
+
+  if (season === "summer") {
+    /* ── me, spring / summer ── */
+    const dresses = L(2, clamp(Math.round(meOutfits * 0.4), 1, 4));
+    const topOutfits = Math.max(1, meOutfits - dresses);
+    const shortTops = L(2, Math.max(1, topOutfits - 1));
+    const t = splitTops(shortTops);
+    add(me, "lst", "Long sleeve top, black or white", 1, "wear for travel");
+    add(me, "sst-c", "Season colour short sleeve top", t.colour);
+    add(me, "sst-w", "White short sleeve top", t.white);
+    add(me, "sst-b", "Black short sleeve top", t.black);
+    add(me, "dress", "Dresses (1 black/white, 1 colour)", dresses);
+    add(me, "shorts", "Shorts", L(1, clamp(ceil((topOutfits - 1) / 2), 1, 4)));
+    add(me, "ltrou", "Light trousers", 1);
+    add(me, "htrou", "Heavier trousers", light ? 0 : 1, "wear for travel");
+    add(me, "layer", "Layers / cardigan", light ? 1 : 2, "1 worn");
+    add(me, "swim", "Swimwear", 1);
+    add(me, "shoes", "Pairs of shoes", light ? 1 : 2, light ? "worn" : "1 worn with warm socks, 1 packed");
+    /* ── Maleeka ── */
+    const mDresses = L(2, clamp(Math.round(malOutfits * 0.3), 1, 4));
+    const mTopOutfits = Math.max(1, malOutfits - mDresses);
+    add(mal, "lst", "Long sleeve top", 1, "wear for travel");
+    add(mal, "sst", "Short sleeve tops", L(2, Math.max(1, mTopOutfits - 1)));
+    add(mal, "dress", "Light dresses", mDresses);
+    add(mal, "shorts", "Shorts", L(1, clamp(ceil((mTopOutfits - 1) / 2), 1, 5)));
+    add(mal, "ltrou", "Light trousers", 1);
+    add(mal, "htrou", "Heavier trousers", light ? 0 : 1, "wear for travel");
+    add(mal, "jumper", "Jumper", 1, "wear for travel");
+    add(mal, "swim", "Swimwear", light ? 1 : nights >= 5 ? 2 : 1);
+    add(mal, "shoes", "Pairs of shoes", light ? 1 : 2, light ? "worn" : "1 worn");
+  } else {
+    /* ── me, autumn / winter ── */
+    const tops = L(3, Math.max(2, meOutfits));
+    const longTops = Math.max(1, tops - 1);
+    add(me, "lst-b", "Black long sleeve top", ceil(longTops / 2), "1 black or white worn");
+    add(me, "lst-w", "White long sleeve top", Math.floor(longTops / 2));
+    add(me, "sst-c", "Season colour short sleeve top", 1);
+    add(me, "trou", "Trousers", L(1, clamp(ceil(meOutfits / 2) + 1, 2, 4)), "wear 1");
+    add(me, "jumper", "Jumpers", L(1, days > 7 ? 3 : 2), "1 worn");
+    add(me, "coat", "Coat", 1, "wear for travel");
+    add(me, "socks", "Pairs of socks", L(5, days));
+    add(me, "shoes", "Pairs of shoes", light ? 1 : 2, light ? "worn" : "1 worn, 1 packed");
+    /* ── Maleeka ── */
+    const mTops = L(3, Math.max(2, malOutfits));
+    const mLong = Math.max(1, mTops - 1);
+    add(mal, "lst-b", "Black long sleeve tops", ceil(mLong / 2), "1 worn");
+    add(mal, "lst-w", "White long sleeve tops", Math.floor(mLong / 2));
+    add(mal, "sst-c", "Season colour short sleeve top", 1);
+    add(mal, "trou", "Trousers", L(1, clamp(ceil(malOutfits / 2) + 1, 2, 5)), "wear 1");
+    add(mal, "jumper", "Jumpers", L(1, days > 4 ? 2 : 1), "1 worn");
+    add(mal, "coat", "Coat", 1, "wear for travel");
+    add(mal, "socks", "Pairs of socks", L(5, days));
+    add(mal, "shoes", "Pair of shoes", 1, "worn");
+  }
+
+  /* underwear + nightwear, both */
+  add(me, "knick", "Knickers", Math.max(1, ceil((light ? Math.min(days, 5) : days) * 4 / 7)), "about 4 a week");
+  add(me, "bra-b", "Black bra", 1);
+  add(me, "bra-w", "White bra", 1);
+  add(me, "bra-s", "Beige or season colour bra", days > 7 ? 1 : 0);
+  add(me, "pj", "Nightie / sleepwear", pj);
+  add(mal, "knick", "Knickers", L(5, days));
+  add(mal, "pj", "Pyjamas / nightie", pj);
+
+  return { me, mal, days, realDays, meOutfits, malOutfits, capped: wash && realDays > washCap, washCap };
+}
+
 /* ── PACKING ─────────────────────────────────── */
 
 function PackSection({ section, ticks, toggle, editing, onAdd, onRemove, onRename }) {
@@ -855,68 +993,218 @@ function PackSection({ section, ticks, toggle, editing, onAdd, onRemove, onRenam
   );
 }
 
+function CountBtn({ children, onClick, disabled }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        width: 30, height: 30, minWidth: 30, borderRadius: "50%", border: "none",
+        background: C.blushSoft, color: C.deepPink, fontWeight: 700, fontSize: 17,
+        cursor: disabled ? "default" : "pointer", opacity: disabled ? 0.35 : 1, fontFamily: fontBody, lineHeight: 1,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ClothesSection({ who, icon, title, items, ticks, toggle, adjust, setAdjust }) {
+  const [open, setOpen] = useState(true);
+  const rows = items
+    .map((it) => {
+      const key = `${who}.${it.id}`;
+      return { ...it, key, count: Math.max(0, it.n + (adjust[key] || 0)), changed: !!adjust[key] };
+    });
+  const shown = rows.filter((r) => r.count > 0 || r.changed);
+  const totalPieces = rows.reduce((n, r) => n + r.count, 0);
+  const done = shown.filter((r) => r.count > 0 && ticks[r.key]).length;
+  const countable = shown.filter((r) => r.count > 0).length;
+
+  return (
+    <Card>
+      <button onClick={() => setOpen((o) => !o)} style={{ width: "100%", background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: fontBody, textAlign: "left" }}>
+        <CardTitle
+          icon={icon}
+          title={title}
+          sub={`${totalPieces} pieces altogether`}
+          right={
+            <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Pill>{done === countable && done > 0 ? "✓ all" : `${done}/${countable}`}</Pill>
+              <span style={{ color: C.sub, fontSize: 14 }}>{open ? "▾" : "▸"}</span>
+            </span>
+          }
+        />
+      </button>
+      {open &&
+        shown.map((r) => {
+          const on = r.count > 0 && !!ticks[r.key];
+          return (
+            <div key={r.key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px dashed ${C.border}` }}>
+              <button
+                onClick={() => r.count > 0 && toggle(r.key)}
+                style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: fontBody, textAlign: "left" }}
+              >
+                <Tick on={on} size={24} />
+                <span style={{ opacity: on ? 0.5 : r.count === 0 ? 0.4 : 1 }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: C.deepPink }}>{r.count} × </span>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: C.ink, textDecoration: on ? "line-through" : "none" }}>{r.text}</span>
+                  {r.note && <div style={{ fontSize: 12.5, color: C.sub, fontWeight: 600 }}>{r.note}</div>}
+                </span>
+              </button>
+              <CountBtn disabled={r.count === 0} onClick={() => setAdjust(r.key, (adjust[r.key] || 0) - 1)}>−</CountBtn>
+              <CountBtn onClick={() => setAdjust(r.key, (adjust[r.key] || 0) + 1)}>+</CountBtn>
+            </div>
+          );
+        })}
+    </Card>
+  );
+}
+
+function Toggle({ on, onClick, label }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", background: "none", border: "none", padding: "7px 0", cursor: "pointer", fontFamily: fontBody, textAlign: "left" }}
+    >
+      <span style={{ width: 44, height: 26, minWidth: 44, borderRadius: 999, background: on ? `linear-gradient(135deg, ${C.pink}, ${C.deepPink})` : C.border, position: "relative", transition: "all .15s" }}>
+        <span style={{ position: "absolute", top: 3, left: on ? 21 : 3, width: 20, height: 20, borderRadius: "50%", background: "#fff", transition: "all .15s", boxShadow: "0 1px 3px rgba(0,0,0,.2)" }} />
+      </span>
+      <span style={{ fontSize: 14.5, fontWeight: 600, color: C.ink }}>{label}</span>
+    </button>
+  );
+}
+
+function Segmented({ options, value, onChange }) {
+  return (
+    <div style={{ display: "flex", gap: 8 }}>
+      {options.map((o) => {
+        const on = o.id === value;
+        return (
+          <button
+            key={o.id}
+            onClick={() => onChange(o.id)}
+            style={{
+              flex: 1, fontFamily: fontBody, fontWeight: 700, fontSize: 13.5, cursor: "pointer", borderRadius: 18,
+              padding: "10px 6px", lineHeight: 1.3,
+              border: on ? `2.5px solid ${C.pink}` : `1.5px solid ${C.border}`,
+              background: on ? "#FFF6FA" : C.card, color: on ? C.deepPink : C.sub,
+            }}
+          >
+            <div style={{ fontSize: 20 }}>{o.emoji}</div>
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function PackingTab() {
-  const [trip, setTrip] = usePersisted("trip", "summer");
+  const [season, setSeason] = usePersisted("tripSeason", "summer");
+  const [style, setStyle] = usePersisted("tripStyle", "suitcase");
+  const [nights, setNights] = usePersisted("tripNights", 7);
+  const [wash, setWash] = usePersisted("tripWash", false);
+  const [meTwice, setMeTwice] = usePersisted("tripMeTwice", true);
+  const [malTwice, setMalTwice] = usePersisted("tripMalTwice", false);
   const [lists, setLists] = usePersisted("packingLists", DEFAULT_PACKING);
-  const [ticks, setTicks] = usePersisted("packingTicks", {});
+  const [ticks, setTicks] = usePersisted("packingTicks2", {});
+  const [adjustAll, setAdjustAll] = usePersisted("packingAdjust", {});
   const [editing, setEditing] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const sections = lists[trip] || DEFAULT_PACKING[trip];
-  const tripTicks = ticks[trip] || {};
-  const total = sections.reduce((n, s) => n + s.items.length, 0);
-  const done = sections.reduce((n, s) => n + s.items.filter((i) => tripTicks[i.id]).length, 0);
+  const light = style === "light";
+  const listKey = light ? "light" : season;
+  const tripKey = `${season}-${style}`;
+  const adjust = adjustAll[tripKey] || {};
+  const setAdjust = (key, v) => setAdjustAll((p) => ({ ...p, [tripKey]: { ...(p[tripKey] || {}), [key]: v } }));
 
-  const toggle = (id) => setTicks((p) => ({ ...p, [trip]: { ...(p[trip] || {}), [id]: !(p[trip] || {})[id] } }));
+  const plan = planClothes({ season, nights, light, wash, meTwice, malTwice });
+  const sections = (lists[listKey] || DEFAULT_PACKING[listKey]).filter((s) => !isClothesSection(s));
+  const tripTicks = ticks[tripKey] || {};
+
+  const clothesRows = [
+    ...plan.me.map((i) => ({ key: `me.${i.id}`, n: i.n })),
+    ...plan.mal.map((i) => ({ key: `mal.${i.id}`, n: i.n })),
+  ].filter((r) => r.n + (adjust[r.key] || 0) > 0);
+  const total = clothesRows.length + sections.reduce((n, s) => n + s.items.length, 0);
+  const done =
+    clothesRows.filter((r) => tripTicks[r.key]).length +
+    sections.reduce((n, s) => n + s.items.filter((i) => tripTicks[i.id]).length, 0);
+
+  const toggle = (id) => setTicks((p) => ({ ...p, [tripKey]: { ...(p[tripKey] || {}), [id]: !(p[tripKey] || {})[id] } }));
   const changeSection = (sid, fn) =>
-    setLists((p) => ({ ...p, [trip]: (p[trip] || DEFAULT_PACKING[trip]).map((s) => (s.id === sid ? { ...s, items: fn(s.items) } : s)) }));
+    setLists((p) => ({ ...p, [listKey]: (p[listKey] || DEFAULT_PACKING[listKey]).map((s) => (s.id === sid ? { ...s, items: fn(s.items) } : s)) }));
   const addItem = (sid, text) => changeSection(sid, (items) => [...items, { id: `${sid}-${Date.now()}`, text }]);
   const removeItem = (sid, id) => changeSection(sid, (items) => items.filter((i) => i.id !== id));
   const renameItem = (sid, id, text) => changeSection(sid, (items) => items.map((i) => (i.id === id ? { ...i, text } : i)));
-  const restoreList = () => setLists((p) => ({ ...p, [trip]: DEFAULT_PACKING[trip] }));
-
+  const restoreList = () => {
+    setLists((p) => ({ ...p, [listKey]: DEFAULT_PACKING[listKey] }));
+    setAdjustAll((p) => ({ ...p, [tripKey]: {} }));
+  };
   const resetTicks = () => {
-    setTicks((p) => ({ ...p, [trip]: {} }));
+    setTicks((p) => ({ ...p, [tripKey]: {} }));
     setConfirmReset(false);
   };
 
-  const label = TRIPS.find((t) => t.id === trip)?.label;
+  const changeNights = (n) => setNights(clamp(n, 1, 28));
+  const seasonName = season === "summer" ? "Spring / Summer" : "Autumn / Winter";
 
   return (
     <>
-      <Header title="Holiday Packing" subtitle="Tick as you pack · it remembers where you got to" />
+      <Header title="Holiday Packing" subtitle="Tell me the trip · I'll work out the clothes" />
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-        {TRIPS.map((t) => {
-          const on = t.id === trip;
-          return (
-            <button
-              key={t.id}
-              onClick={() => { setTrip(t.id); setConfirmReset(false); setEditing(false); }}
-              style={{
-                flex: 1,
-                fontFamily: fontBody,
-                fontWeight: 700,
-                fontSize: 13,
-                cursor: "pointer",
-                borderRadius: 18,
-                padding: "10px 6px",
-                border: on ? `2.5px solid ${C.pink}` : `1.5px solid ${C.border}`,
-                background: on ? "#FFF6FA" : C.card,
-                color: on ? C.deepPink : C.sub,
-                lineHeight: 1.3,
-              }}
-            >
-              <div style={{ fontSize: 20 }}>{t.emoji}</div>
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
+      <Card>
+        <CardTitle icon="🗓️" title="Your trip" />
+        <Segmented
+          value={season}
+          onChange={(v) => { setSeason(v); setConfirmReset(false); setEditing(false); }}
+          options={[{ id: "summer", label: "Spring / Summer", emoji: "☀️" }, { id: "winter", label: "Autumn / Winter", emoji: "🧣" }]}
+        />
+        <div style={{ height: 10 }} />
+        <Segmented
+          value={style}
+          onChange={(v) => { setStyle(v); setConfirmReset(false); setEditing(false); }}
+          options={[{ id: "suitcase", label: "Suitcase", emoji: "🧳" }, { id: "light", label: "Light packing", emoji: "🪶" }]}
+        />
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18, margin: "18px 0 6px" }}>
+          <button onClick={() => changeNights(nights - 1)} style={{ ...btnBase, width: 46, height: 46, padding: 0, fontSize: 22, background: C.blushSoft, color: C.deepPink }}>−</button>
+          <div style={{ textAlign: "center", minWidth: 90 }}>
+            <div style={{ fontFamily: fontScript, fontSize: 46, color: C.deepPink, lineHeight: 1 }}>{nights}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.berry }}>{nights === 1 ? "night" : "nights"}</div>
+          </div>
+          <button onClick={() => changeNights(nights + 1)} style={{ ...btnBase, width: 46, height: 46, padding: 0, fontSize: 22, background: C.blushSoft, color: C.deepPink }}>+</button>
+        </div>
+        <div style={{ textAlign: "center", fontSize: 13, color: C.sub, fontWeight: 600, marginBottom: 8 }}>
+          {plan.realDays} days including travel
+        </div>
+
+        <div style={{ borderTop: `1px dashed ${C.border}`, paddingTop: 6 }}>
+          <Toggle on={meTwice} onClick={() => setMeTwice((v) => !v)} label="I wear each outfit twice" />
+          <Toggle on={malTwice} onClick={() => setMalTwice((v) => !v)} label="Maleeka wears each outfit twice" />
+          <Toggle on={wash} onClick={() => setWash((v) => !v)} label={`I can do a wash while away`} />
+        </div>
+      </Card>
 
       <Card style={{ background: "linear-gradient(180deg, #FFF6FA, #FCE4EE)" }}>
-        <CardTitle icon="🧳" title={label} right={<Pill>{done}/{total} packed</Pill>} />
+        <CardTitle icon="✨" title={`${seasonName} · ${light ? "Light" : "Suitcase"}`} right={<Pill>{done}/{total} packed</Pill>} />
         <ProgressBar done={done} total={total} />
+        <div style={{ fontSize: 14, color: C.ink, fontWeight: 600, lineHeight: 1.6, marginTop: 10 }}>
+          💗 {plan.meOutfits} outfits for you{meTwice ? ", each worn twice" : ""}
+          <br />💗 {plan.malOutfits} outfits for Maleeka{malTwice ? ", each worn twice" : ""}
+          {plan.capped && (
+            <>
+              <br />🧺 Packed for {plan.washCap} days — plan a wash to cover the rest
+            </>
+          )}
+          {light && !wash && plan.realDays > 4 && (
+            <>
+              <br />🧺 Light packing caps the clothes — plan a wash or turn on washing
+            </>
+          )}
+        </div>
+        <div style={{ fontSize: 12.5, color: C.sub, marginTop: 6 }}>Use − and + on any clothing line if you want more or less.</div>
         {done === total && total > 0 && !editing && (
           <div style={{ textAlign: "center", marginTop: 10 }}>
             <div style={{ fontFamily: fontScript, fontSize: 30, color: C.deepPink }}>All packed!</div>
@@ -943,9 +1231,16 @@ function PackingTab() {
         )}
       </Card>
 
+      {!editing && (
+        <>
+          <ClothesSection who="me" icon="👚" title="My clothes" items={plan.me} ticks={tripTicks} toggle={toggle} adjust={adjust} setAdjust={setAdjust} />
+          <ClothesSection who="mal" icon="🎀" title="Maleeka's clothes" items={plan.mal} ticks={tripTicks} toggle={toggle} adjust={adjust} setAdjust={setAdjust} />
+        </>
+      )}
+
       {sections.map((s) => (
         <PackSection
-          key={`${trip}-${s.id}`}
+          key={`${listKey}-${s.id}`}
           section={s}
           ticks={tripTicks}
           toggle={toggle}
@@ -1018,14 +1313,14 @@ function DeclutterCheck() {
 }
 
 const DRAWERS = [
-  ["1", "5 knickers · 2 black bras · 2 white bras · 1 seasonal or neutral bra"],
-  ["2", "Socks and knickers"],
-  ["3", "Seasonal tops (3)"],
-  ["4", "White tops — 2 long, 2 short"],
-  ["5", "Black tops — 2 long, 2 short"],
-  ["6", "Shorts — white, black, seasonal, denim"],
-  ["7", "Trousers — 2 black/denim, 2 seasonal"],
-  ["8", "Dresses — up to 4"],
+  ["1", "Bras — 2 black, 2 white, 1 beige or seasonal"],
+  ["2", "Knickers (5) · socks (6) · nightwear · swimwear in summer"],
+  ["3", "Season colour tops — 3 in spring/summer, 2 (1 of each colour, +1 flex) in autumn/winter"],
+  ["4", "White tops — 2 short + 1 long (2 white/cream long in autumn/winter)"],
+  ["5", "Black tops — 2 short + 1 long (2 long + 1 short in autumn/winter)"],
+  ["6", "Shorts — black, season colour, white or denim"],
+  ["7", "Trousers — black, dark denim, season colour (+ warm pair in winter)"],
+  ["8", "Dresses — 3, up to 4"],
 ];
 
 function Lines({ lines }) {
@@ -1041,7 +1336,7 @@ function SystemTab() {
 
       <Card>
         <CardTitle icon="🎨" title="Core idea" sub="Each season" />
-        <Lines lines={["1–2 seasonal colours", "Black + white base", "Denim / neutral trousers", "Everything must mix", "No duplicates", "No “just okay” items"]} />
+        <Lines lines={["1–2 seasonal colours", "Black + white base", "Denim / neutral trousers — colour goes in your tops", "Everything must mix", "No duplicates (except basics)", "No “just okay” items"]} />
       </Card>
 
       <Card>
@@ -1089,9 +1384,9 @@ function SystemTab() {
       <Card>
         <CardTitle icon="📦" title="Seasonal storage bags" />
         <div style={{ fontWeight: 700, color: C.berry, fontSize: 15, marginBottom: 2 }}>☀️ Spring / Summer bag</div>
-        <Lines lines={["Seasonal extras", "Max 4 shorts", "Max 4 dresses", "1 jumper", "1 bag", "1 shoes"]} />
+        <Lines lines={["Seasonal extras", "Max 4 shorts", "Max 4 dresses", "Cardigan", "Light jacket", "Sliders / sandals", "Swimwear", "1 bag"]} />
         <div style={{ fontWeight: 700, color: C.berry, fontSize: 15, margin: "12px 0 2px" }}>🧣 Autumn / Winter bag</div>
-        <Lines lines={["Seasonal extras", "Jumpers", "Coats", "1 bag", "1 shoes"]} />
+        <Lines lines={["Seasonal extras", "Jumpers", "Coats", "Boots", "1 bag"]} />
       </Card>
     </>
   );
