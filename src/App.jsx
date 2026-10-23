@@ -146,6 +146,15 @@ function buildCategories(s) {
         ],
       },
       {
+        id: "dresses", icon: "👗", title: "Dresses", rule: "Max 3 · wear with tights & boots",
+        items: [
+          it("wd1", "Black dress — long sleeve or jumper dress"),
+          it("wd2", `${c1} or ${c2.toLowerCase()} dress`),
+          it("wd3", "Grey, cream or white dress"),
+          extraSlot(),
+        ],
+      },
+      {
         id: "jumpers", icon: "🧶", title: "Jumpers", rule: "3, up to 4 · kept outside the drawers",
         items: [it("b1", "Black"), it("w1", "White or cream"), it("s", sc), opt("b2", "Black cardigan"), extraSlot()],
       },
@@ -158,12 +167,13 @@ function buildCategories(s) {
 
   cats.push(
     {
-      id: "underwear", icon: "👙", title: "Underwear", rule: "5 bras · 5 knickers · 6 socks",
+      id: "underwear", icon: "👙", title: "Underwear", rule: s.warm ? "5 bras · 5 knickers · 6 socks" : "5 bras · 5 knickers · 6 socks · tights",
       items: [
         it("bb1", "Black bra"), it("bb2", "Black bra"),
         it("wb1", "White bra"), it("wb2", "White bra"),
         it("sb", `Beige or ${s.word} bra`),
         it("k", "Knickers × 5"), it("so", "Socks × 6"),
+        ...(s.warm ? [] : [it("ti", "Black tights × 2–3")]),
       ],
     },
     {
@@ -888,8 +898,8 @@ function planClothes({ season, nights, light, wash, meTwice, malTwice }) {
     const mDresses = L(2, clamp(Math.round(malOutfits * 0.3), 1, 4));
     const mTopOutfits = Math.max(1, malOutfits - mDresses);
     add(mal, "lst", "Long sleeve top", 1, "wear for travel");
-    add(mal, "sst", "Short sleeve tops", L(2, Math.max(1, mTopOutfits - 1)));
-    add(mal, "dress", "Light dresses", mDresses);
+    add(mal, "sst", "Short sleeve tops — any colour", L(2, Math.max(1, mTopOutfits - 1)));
+    add(mal, "dress", "Light dresses — any colour", mDresses);
     add(mal, "shorts", "Shorts", L(1, clamp(ceil((mTopOutfits - 1) / 2), 1, 5)));
     add(mal, "ltrou", "Light trousers", 1);
     add(mal, "htrou", "Heavier trousers", light ? 0 : 1, "wear for travel");
@@ -898,11 +908,14 @@ function planClothes({ season, nights, light, wash, meTwice, malTwice }) {
     add(mal, "shoes", "Pairs of shoes", light ? 1 : 2, light ? "worn" : "1 worn");
   } else {
     /* ── me, autumn / winter ── */
-    const tops = L(3, Math.max(2, meOutfits));
+    const wDresses = meOutfits >= 3 ? L(1, days > 7 ? 2 : 1) : 0;
+    const tops = L(3, Math.max(2, meOutfits - wDresses));
     const longTops = Math.max(1, tops - 1);
     add(me, "lst-b", "Black long sleeve top", ceil(longTops / 2), "1 black or white worn");
     add(me, "lst-w", "White long sleeve top", Math.floor(longTops / 2));
     add(me, "sst-c", "Season colour short sleeve top", 1);
+    add(me, "dress", "Winter dress", wDresses, "wear with tights & boots");
+    add(me, "tights", "Pairs of black tights", wDresses > 0 ? wDresses + 1 : 0);
     add(me, "trou", "Trousers", L(1, clamp(ceil(meOutfits / 2) + 1, 2, 4)), "wear 1");
     add(me, "jumper", "Jumpers", L(1, days > 7 ? 3 : 2), "1 worn");
     add(me, "coat", "Coat", 1, "wear for travel");
@@ -911,9 +924,8 @@ function planClothes({ season, nights, light, wash, meTwice, malTwice }) {
     /* ── Maleeka ── */
     const mTops = L(3, Math.max(2, malOutfits));
     const mLong = Math.max(1, mTops - 1);
-    add(mal, "lst-b", "Black long sleeve tops", ceil(mLong / 2), "1 worn");
-    add(mal, "lst-w", "White long sleeve tops", Math.floor(mLong / 2));
-    add(mal, "sst-c", "Season colour short sleeve top", 1);
+    add(mal, "lst", "Long sleeve tops — any colour", mLong, "1 worn");
+    add(mal, "sst", "Short sleeve top — any colour", 1);
     add(mal, "trou", "Trousers", L(1, clamp(ceil(malOutfits / 2) + 1, 2, 5)), "wear 1");
     add(mal, "jumper", "Jumpers", L(1, days > 4 ? 2 : 1), "1 worn");
     add(mal, "coat", "Coat", 1, "wear for travel");
@@ -1320,7 +1332,7 @@ const DRAWERS = [
   ["5", "Black tops — 2 short + 1 long (2 long + 1 short in autumn/winter)"],
   ["6", "Shorts — black, season colour, white or denim"],
   ["7", "Trousers — black, dark denim, season colour (+ warm pair in winter)"],
-  ["8", "Dresses — 3, up to 4"],
+  ["8", "Dresses — 3, up to 4 in spring/summer · 3 winter dresses in autumn/winter"],
 ];
 
 function Lines({ lines }) {
@@ -1386,7 +1398,7 @@ function SystemTab() {
         <div style={{ fontWeight: 700, color: C.berry, fontSize: 15, marginBottom: 2 }}>☀️ Spring / Summer bag</div>
         <Lines lines={["Seasonal extras", "Max 4 shorts", "Max 4 dresses", "Cardigan", "Light jacket", "Sliders / sandals", "Swimwear", "1 bag"]} />
         <div style={{ fontWeight: 700, color: C.berry, fontSize: 15, margin: "12px 0 2px" }}>🧣 Autumn / Winter bag</div>
-        <Lines lines={["Seasonal extras", "Jumpers", "Coats", "Boots", "1 bag"]} />
+        <Lines lines={["Seasonal extras", "Jumpers", "Coats", "Winter dresses + tights", "Boots", "1 bag"]} />
       </Card>
     </>
   );
