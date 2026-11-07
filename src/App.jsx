@@ -1112,6 +1112,62 @@ function Segmented({ options, value, onChange }) {
   );
 }
 
+function RandomBits() {
+  const [items, setItems] = usePersisted("randomBits", []);
+  const [draft, setDraft] = useState("");
+  const [confirmClear, setConfirmClear] = useState(false);
+  const add = () => {
+    const t = draft.trim();
+    if (!t) return;
+    setItems((p) => [...p, { id: `rb-${Date.now()}`, text: t, done: false }]);
+    setDraft("");
+  };
+  const toggle = (id) => setItems((p) => p.map((i) => (i.id === id ? { ...i, done: !i.done } : i)));
+  const remove = (id) => setItems((p) => p.filter((i) => i.id !== id));
+  const done = items.filter((i) => i.done).length;
+
+  return (
+    <Card style={{ border: `2px solid ${C.pink}` }}>
+      <CardTitle
+        icon="🛁"
+        title="Random bits"
+        sub="Pampering, one-offs, anything not to forget"
+        right={items.length > 0 ? <Pill>{done === items.length ? "✓ all" : `${done}/${items.length}`}</Pill> : null}
+      />
+      <div style={{ display: "flex", gap: 8, marginBottom: items.length ? 6 : 0 }}>
+        <TextInput value={draft} onChange={setDraft} onEnter={add} placeholder="e.g. face mask, bath bomb…" />
+        <SmallPinkBtn onClick={add}>Add</SmallPinkBtn>
+      </div>
+      {items.map((item) => (
+        <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px dashed ${C.border}` }}>
+          <button
+            onClick={() => toggle(item.id)}
+            style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: fontBody, textAlign: "left" }}
+          >
+            <Tick on={item.done} size={24} />
+            <span style={{ fontSize: 15, fontWeight: 600, color: C.ink, textDecoration: item.done ? "line-through" : "none", opacity: item.done ? 0.5 : 1 }}>
+              {item.text}
+            </span>
+          </button>
+          <DeleteBtn onClick={() => remove(item.id)} />
+        </div>
+      ))}
+      {items.length > 0 && (
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 12, flexWrap: "wrap" }}>
+          {!confirmClear ? (
+            <PinkButton small ghost onClick={() => setConfirmClear(true)}>🧹 Clear list for next trip</PinkButton>
+          ) : (
+            <>
+              <PinkButton small onClick={() => { setItems([]); setConfirmClear(false); }}>Yes, clear it</PinkButton>
+              <PinkButton small ghost onClick={() => setConfirmClear(false)}>Cancel</PinkButton>
+            </>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function PackingTab() {
   const [season, setSeason] = usePersisted("tripSeason", "summer");
   const [style, setStyle] = usePersisted("tripStyle", "suitcase");
@@ -1242,6 +1298,8 @@ function PackingTab() {
           </div>
         )}
       </Card>
+
+      {!editing && <RandomBits />}
 
       {!editing && (
         <>
